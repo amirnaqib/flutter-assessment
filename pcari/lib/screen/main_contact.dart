@@ -157,10 +157,9 @@ class _mainContactScreenState extends State<mainContactScreen> {
                               userlist.value[index].avatar.toString()),
                           backgroundColor: Colors.transparent,
                         ),
-                        contentPadding: EdgeInsets.all(0),
-                        title: Text(userlist.value[index].firstName.toString() +
-                            ' ' +
-                            userlist.value[index].lastName.toString()),
+                        contentPadding: const EdgeInsets.all(0),
+                        title: Text(
+                            '${userlist.value[index].firstName} ${userlist.value[index].lastName}'),
                         subtitle: Text(userlist.value[index].email.toString()),
                         trailing: IconButton(
                           icon: const Icon(
