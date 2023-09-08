@@ -41,6 +41,7 @@ dependencies:
   flutter_slidable: ^3.0.0
   open_mail_app: ^0.4.5
   fluttertoast: ^8.2.2
+  searchfield: ^0.8.4
 
 dev_dependencies:
   flutter_test:

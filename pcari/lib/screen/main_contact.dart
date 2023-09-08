@@ -10,6 +10,7 @@ import 'package:pcari/dto/userListDto.dart';
 import 'package:http/http.dart' as http;
 import 'package:pcari/screen/user_details.dart';
 import 'package:pcari/screen/user_edit.dart';
+import 'package:searchfield/searchfield.dart';
 
 class mainContactScreen extends StatefulWidget {
   const mainContactScreen({super.key});
@@ -22,6 +23,9 @@ class _mainContactScreenState extends State<mainContactScreen> {
   int tag = 0;
   List<String> options = ['All', 'Favorite'];
   ValueNotifier<List<userListDto>> userlist = ValueNotifier([]);
+  ValueNotifier<List<userListDto>> filtercontact = ValueNotifier([]);
+
+  TextEditingController searchController = TextEditingController();
 
   Future<List<userListDto>> getUserList() async {
     var res = await http.get(Uri.parse("https://reqres.in/api/users?page=1"));
@@ -58,7 +62,35 @@ class _mainContactScreenState extends State<mainContactScreen> {
     );
   }
 
-  searchBar() {}
+  searchBar() => SearchField<userListDto>(
+      onSearchTextChanged: onSearch(),
+      controller: searchController,
+      searchInputDecoration: InputDecoration(
+        hintText: 'Search',
+        focusedBorder: OutlineInputBorder(
+          borderSide: BorderSide(
+            color: ApplicationTheme.primaryColor,
+          ),
+        ),
+        border: OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.red),
+        ),
+      ),
+      suggestions: []);
+
+  onSearch() {
+    setState(() {
+      filtercontact.value = userlist.value
+          .where((e) =>
+              e.firstName!
+                  .toLowerCase()
+                  .contains(searchController.text.toLowerCase()) ||
+              e.lastName!
+                  .toLowerCase()
+                  .contains(searchController.text.toLowerCase()))
+          .toList();
+    });
+  }
 
   addFavList() {
     print('testing add..');
@@ -187,68 +219,72 @@ class _mainContactScreenState extends State<mainContactScreen> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
-        child: Column(
-          children: [
-            // searchBar(),
-            chipList(),
-            SizedBox(
-              width: MediaQuery.of(context).size.width,
-              child: ListView.builder(
-                  itemCount: userlist.value.length,
-                  shrinkWrap: true,
-                  itemBuilder: (context, index) {
-                    return Slidable(
-                      endActionPane: ActionPane(
-                          motion: const ScrollMotion(),
-                          dismissible: DismissiblePane(onDismissed: () {}),
-                          children: [
-                            SlidableAction(
-                              onPressed: (context) async {
-                                editUserDetails(userlist.value[index].id);
-                              },
-                              backgroundColor: ApplicationTheme.primaryColor
-                                  .withOpacity(0.5),
-                              foregroundColor: Colors.yellow,
-                              icon: Icons.edit,
-                            ),
-                            SlidableAction(
-                              onPressed: (context) async {
-                                showConfirmDeleteDialog(
-                                    userlist.value[index].id);
-                              },
-                              backgroundColor: ApplicationTheme.primaryColor
-                                  .withOpacity(0.5),
-                              foregroundColor: Colors.red,
-                              icon: Icons.delete,
-                            ),
-                          ]),
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          radius: 25.0,
-                          backgroundImage: NetworkImage(
-                              userlist.value[index].avatar.toString()),
-                          backgroundColor: Colors.transparent,
-                        ),
-                        contentPadding: const EdgeInsets.all(0),
-                        title: Text(
-                            '${userlist.value[index].firstName} ${userlist.value[index].lastName}'),
-                        subtitle: Text(userlist.value[index].email.toString()),
-                        trailing: IconButton(
-                          icon: const Icon(
-                            Icons.send_rounded,
-                            color: ApplicationTheme.primaryColor,
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              searchBar(),
+              chipList(),
+              SizedBox(
+                width: MediaQuery.of(context).size.width,
+                child: ListView.builder(
+                    itemCount: filtercontact.value.length,
+                    shrinkWrap: true,
+                    itemBuilder: (context, index) {
+                      return Slidable(
+                        endActionPane: ActionPane(
+                            motion: const ScrollMotion(),
+                            dismissible: DismissiblePane(onDismissed: () {}),
+                            children: [
+                              SlidableAction(
+                                onPressed: (context) async {
+                                  editUserDetails(
+                                      filtercontact.value[index].id);
+                                },
+                                backgroundColor: ApplicationTheme.primaryColor
+                                    .withOpacity(0.5),
+                                foregroundColor: Colors.yellow,
+                                icon: Icons.edit,
+                              ),
+                              SlidableAction(
+                                onPressed: (context) async {
+                                  showConfirmDeleteDialog(
+                                      filtercontact.value[index].id);
+                                },
+                                backgroundColor: ApplicationTheme.primaryColor
+                                    .withOpacity(0.5),
+                                foregroundColor: Colors.red,
+                                icon: Icons.delete,
+                              ),
+                            ]),
+                        child: ListTile(
+                          leading: CircleAvatar(
+                            radius: 25.0,
+                            backgroundImage: NetworkImage(
+                                filtercontact.value[index].avatar.toString()),
+                            backgroundColor: Colors.transparent,
                           ),
-                          onPressed: () {
-                            getUserDetails(userlist.value[index].id);
-                            // do something
-                          },
+                          contentPadding: const EdgeInsets.all(0),
+                          title: Text(
+                              '${filtercontact.value[index].firstName} ${filtercontact.value[index].lastName}'),
+                          subtitle:
+                              Text(filtercontact.value[index].email.toString()),
+                          trailing: IconButton(
+                            icon: const Icon(
+                              Icons.send_rounded,
+                              color: ApplicationTheme.primaryColor,
+                            ),
+                            onPressed: () {
+                              getUserDetails(filtercontact.value[index].id);
+                              // do something
+                            },
+                          ),
+                          onTap: () {},
                         ),
-                        onTap: () {},
-                      ),
-                    );
-                  }),
-            )
-          ],
+                      );
+                    }),
+              )
+            ],
+          ),
         ),
       ),
     );
