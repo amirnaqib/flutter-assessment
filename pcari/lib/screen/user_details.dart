@@ -1,12 +1,14 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:open_mail_app/open_mail_app.dart';
 import 'package:pcari/conf/app_theme.dart';
 import 'package:pcari/dto/userDetailsDto.dart';
 import 'package:http/http.dart' as http;
 
 class UserDetails extends StatefulWidget {
-  const UserDetails(id, {super.key});
+  const UserDetails({super.key, required this.id});
+  final int id;
 
   @override
   State<UserDetails> createState() => _UserDetailsState();
@@ -28,8 +30,56 @@ class _UserDetailsState extends State<UserDetails> {
     init();
   }
 
+  sendEmail() async {
+    print('send email');
+    // Android: Will open mail app or show native picker.
+    // iOS: Will open mail app if single mail app found.
+    var result = await OpenMailApp.openMailApp(
+      nativePickerTitle: 'Select email app to open',
+    );
+
+    // If no mail apps found, show error
+    if (!result.didOpen && !result.canOpen) {
+      showNoMailAppsDialog(context);
+
+      // iOS: if multiple mail apps found, show dialog to select.
+      // There is no native intent/default app system in iOS so
+      // you have to do it yourself.
+    } else if (!result.didOpen && result.canOpen) {
+      showDialog(
+        context: context,
+        builder: (_) {
+          return MailAppPickerDialog(
+            mailApps: result.options,
+          );
+        },
+      );
+    }
+  }
+
+  void showNoMailAppsDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Open Mail App"),
+          content: Text("No mail apps installed"),
+          actions: <Widget>[
+            TextButton(
+              child: Text("OK"),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            )
+          ],
+        );
+      },
+    );
+  }
+
   Future<userDetailsDto> getUserDetails() async {
-    var res = await http.get(Uri.parse("https://reqres.in/api/users/2"));
+    var res =
+        await http.get(Uri.parse("https://reqres.in/api/users/${widget.id}"));
     if (res.statusCode == 200) {
       setState(() {
         userdetails = userDetailsDto.fromJson(jsonDecode(res.body)['data']);
@@ -109,7 +159,9 @@ class _UserDetailsState extends State<UserDetails> {
             height: 10,
           ),
           GestureDetector(
-            onTap: () {},
+            onTap: () {
+              sendEmail();
+            },
             child: Container(
               width: MediaQuery.of(context).size.width * 0.9,
               height: 50,

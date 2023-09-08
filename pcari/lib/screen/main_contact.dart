@@ -72,7 +72,7 @@ class _mainContactScreenState extends State<mainContactScreen> {
   getUserDetails(id) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => UserDetails(id)),
+      MaterialPageRoute(builder: (context) => UserDetails(id: id)),
     );
   }
 
