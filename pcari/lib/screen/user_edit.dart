@@ -147,7 +147,7 @@ class _UserEditState extends State<UserEdit> {
               ),
               GestureDetector(
                 onTap: () {
-                  saveDetails('${widget.id}');
+                  saveDetails(widget.id);
                 },
                 child: Container(
                   width: MediaQuery.of(context).size.width * 0.9,

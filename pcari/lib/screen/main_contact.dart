@@ -4,6 +4,7 @@ import 'package:chips_choice/chips_choice.dart';
 import 'package:flexi_chip/flexi_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:pcari/conf/app_theme.dart';
 import 'package:pcari/dto/userListDto.dart';
 import 'package:http/http.dart' as http;
@@ -84,6 +85,64 @@ class _mainContactScreenState extends State<mainContactScreen> {
     );
   }
 
+  deleteContact(id, context) async {
+    var res = await http.delete(Uri.parse("https://reqres.in/api/users/$id"));
+    if (res.statusCode == 200 || res.statusCode == 204) {
+      Navigator.pop(context);
+      Fluttertoast.showToast(
+          msg: "Successfuly Deleted!",
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: ApplicationTheme.successColor,
+          textColor: Colors.white,
+          fontSize: 16.0);
+    } else {
+      Navigator.pop(context);
+      Fluttertoast.showToast(
+          msg: "Failed To Delete, Try Again!",
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: ApplicationTheme.failedColor,
+          textColor: Colors.white,
+          fontSize: 16.0);
+    }
+  }
+
+  showConfirmDeleteDialog(id) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: ApplicationTheme.secondaryColor,
+          content: Text("Are you sure you want to delete this contact?"),
+          actionsAlignment: MainAxisAlignment.spaceBetween,
+          actions: [
+            TextButton(
+              child: Text(
+                "Yes",
+                style: TextStyle(color: Colors.red),
+              ),
+              onPressed: () {
+                deleteContact(id, context);
+              },
+            ),
+            TextButton(
+              child: Text(
+                "No",
+                style: TextStyle(color: ApplicationTheme.primaryColor),
+              ),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            )
+          ],
+        );
+      },
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -153,7 +212,10 @@ class _mainContactScreenState extends State<mainContactScreen> {
                               icon: Icons.edit,
                             ),
                             SlidableAction(
-                              onPressed: (context) async {},
+                              onPressed: (context) async {
+                                showConfirmDeleteDialog(
+                                    userlist.value[index].id);
+                              },
                               backgroundColor: ApplicationTheme.primaryColor
                                   .withOpacity(0.5),
                               foregroundColor: Colors.red,
