@@ -8,6 +8,7 @@ import 'package:pcari/conf/app_theme.dart';
 import 'package:pcari/dto/userListDto.dart';
 import 'package:http/http.dart' as http;
 import 'package:pcari/screen/user_details.dart';
+import 'package:pcari/screen/user_edit.dart';
 
 class mainContactScreen extends StatefulWidget {
   const mainContactScreen({super.key});
@@ -76,6 +77,13 @@ class _mainContactScreenState extends State<mainContactScreen> {
     );
   }
 
+  editUserDetails(id) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => UserEdit(id: id)),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -136,7 +144,9 @@ class _mainContactScreenState extends State<mainContactScreen> {
                           dismissible: DismissiblePane(onDismissed: () {}),
                           children: [
                             SlidableAction(
-                              onPressed: searchBar(),
+                              onPressed: (context) async {
+                                editUserDetails(userlist.value[index].id);
+                              },
                               backgroundColor: ApplicationTheme.primaryColor
                                   .withOpacity(0.5),
                               foregroundColor: Colors.yellow,

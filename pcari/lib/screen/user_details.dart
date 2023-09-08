@@ -5,6 +5,7 @@ import 'package:open_mail_app/open_mail_app.dart';
 import 'package:pcari/conf/app_theme.dart';
 import 'package:pcari/dto/userDetailsDto.dart';
 import 'package:http/http.dart' as http;
+import 'package:pcari/screen/user_edit.dart';
 
 class UserDetails extends StatefulWidget {
   const UserDetails({super.key, required this.id});
@@ -91,6 +92,13 @@ class _UserDetailsState extends State<UserDetails> {
     }
   }
 
+  editUserDetails(id) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => UserEdit(id: id)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -105,6 +113,7 @@ class _UserDetailsState extends State<UserDetails> {
               color: Colors.white,
             ),
             onPressed: () {
+              editUserDetails(widget.id);
               // do something
             },
           )
