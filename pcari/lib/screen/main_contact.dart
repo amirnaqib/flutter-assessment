@@ -5,12 +5,14 @@ import 'package:flexi_chip/flexi_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:like_button/like_button.dart';
 import 'package:pcari/conf/app_theme.dart';
 import 'package:pcari/dto/userListDto.dart';
 import 'package:http/http.dart' as http;
 import 'package:pcari/screen/user_details.dart';
 import 'package:pcari/screen/user_edit.dart';
 import 'package:searchfield/searchfield.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class mainContactScreen extends StatefulWidget {
   const mainContactScreen({super.key});
@@ -22,6 +24,7 @@ class mainContactScreen extends StatefulWidget {
 class _mainContactScreenState extends State<mainContactScreen> {
   int tag = 0;
   List<String> options = ['All', 'Favorite'];
+  List<String>? globalfavlist = [];
   ValueNotifier<List<userListDto>> userlist = ValueNotifier([]);
   ValueNotifier<List<userListDto>> filtercontact = ValueNotifier([]);
 
@@ -95,11 +98,25 @@ class _mainContactScreenState extends State<mainContactScreen> {
     });
   }
 
-  addFavList() {
-    print('testing add..');
+  toggleFav(id) async {
+    //set to fav if dont have
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final List<String>? currentList = prefs.getStringList('favlist');
+    if (currentList!.contains(id)) {
+      //remove
+      currentList.remove(id);
+    } else {
+      //add
+      currentList.add(id);
+    }
+    await prefs.setStringList('favlist', currentList);
   }
 
   init() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final List<String>? favlist = prefs.getStringList('favlist');
+    globalfavlist = favlist;
+
     await getUserList();
     getUserList().then((response) {
       setState(() {});
@@ -178,6 +195,111 @@ class _mainContactScreenState extends State<mainContactScreen> {
     );
   }
 
+  Future<bool> onFavButtonTapped(bool isLiked) async {
+    /// send your request here
+    // final bool success= await sendRequest();
+
+    /// if failed, you can do nothing
+    // return success? !isLiked:isLiked;
+
+    return !isLiked;
+  }
+
+  buildListView() => ListView.builder(
+      itemCount: filtercontact.value.length,
+      shrinkWrap: true,
+      itemBuilder: (context, index) {
+        return Slidable(
+          endActionPane: ActionPane(
+              motion: const ScrollMotion(),
+              dismissible: DismissiblePane(onDismissed: () {}),
+              children: [
+                SlidableAction(
+                  onPressed: (context) async {
+                    editUserDetails(filtercontact.value[index].id);
+                  },
+                  backgroundColor:
+                      ApplicationTheme.primaryColor.withOpacity(0.5),
+                  foregroundColor: Colors.yellow,
+                  icon: Icons.edit,
+                ),
+                SlidableAction(
+                  onPressed: (context) async {
+                    showConfirmDeleteDialog(filtercontact.value[index].id);
+                  },
+                  backgroundColor:
+                      ApplicationTheme.primaryColor.withOpacity(0.5),
+                  foregroundColor: Colors.red,
+                  icon: Icons.delete,
+                ),
+              ]),
+          child: ListTile(
+            onLongPress: () {
+              toggleFav(filtercontact.value[index].id.toString());
+            },
+            leading: CircleAvatar(
+              radius: 25.0,
+              backgroundImage:
+                  NetworkImage(filtercontact.value[index].avatar.toString()),
+              backgroundColor: Colors.transparent,
+            ),
+            contentPadding: const EdgeInsets.all(0),
+            title: Row(children: [
+              Text(
+                  '${filtercontact.value[index].firstName} ${filtercontact.value[index].lastName}'),
+              const SizedBox(
+                width: 10,
+              ),
+              LikeButton(
+                onTap: onFavButtonTapped,
+                circleColor: CircleColor(
+                    start: ApplicationTheme.yellow,
+                    end: ApplicationTheme.yellow),
+                bubblesColor: BubblesColor(
+                  dotPrimaryColor: ApplicationTheme.yellow,
+                  dotSecondaryColor: ApplicationTheme.yellow,
+                ),
+                likeBuilder: (bool isLiked) {
+                  return Icon(
+                    Icons.star,
+                    color: isLiked ? ApplicationTheme.yellow : Colors.grey,
+                  );
+                },
+              ),
+              // IconButton(
+              //   onPressed: () {},
+              //   icon: Icon(
+              //     Icons.star,
+              //     color: ApplicationTheme.yellow,
+              //   ),
+              // ),
+              // Visibility(
+              //   visible: globalfavlist!
+              //           .contains(filtercontact.value[index].id.toString())
+              //       ? true
+              //       : false,
+              //   child: const Icon(
+              //     Icons.star,
+              //     color: ApplicationTheme.yellow,
+              //   ),
+              // ),
+            ]),
+            subtitle: Text(filtercontact.value[index].email.toString()),
+            trailing: IconButton(
+              icon: const Icon(
+                Icons.send_rounded,
+                color: ApplicationTheme.primaryColor,
+              ),
+              onPressed: () {
+                getUserDetails(filtercontact.value[index].id);
+                // do something
+              },
+            ),
+            onTap: () {},
+          ),
+        );
+      });
+
   @override
   void initState() {
     super.initState();
@@ -188,9 +310,7 @@ class _mainContactScreenState extends State<mainContactScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          addFavList();
-        },
+        onPressed: () {},
         shape: const CircleBorder(),
         backgroundColor: ApplicationTheme.primaryColor,
         child: const Icon(
@@ -228,64 +348,8 @@ class _mainContactScreenState extends State<mainContactScreen> {
               searchBar(),
               chipList(),
               SizedBox(
-                width: MediaQuery.of(context).size.width,
-                child: ListView.builder(
-                    itemCount: filtercontact.value.length,
-                    shrinkWrap: true,
-                    itemBuilder: (context, index) {
-                      return Slidable(
-                        endActionPane: ActionPane(
-                            motion: const ScrollMotion(),
-                            dismissible: DismissiblePane(onDismissed: () {}),
-                            children: [
-                              SlidableAction(
-                                onPressed: (context) async {
-                                  editUserDetails(
-                                      filtercontact.value[index].id);
-                                },
-                                backgroundColor: ApplicationTheme.primaryColor
-                                    .withOpacity(0.5),
-                                foregroundColor: Colors.yellow,
-                                icon: Icons.edit,
-                              ),
-                              SlidableAction(
-                                onPressed: (context) async {
-                                  showConfirmDeleteDialog(
-                                      filtercontact.value[index].id);
-                                },
-                                backgroundColor: ApplicationTheme.primaryColor
-                                    .withOpacity(0.5),
-                                foregroundColor: Colors.red,
-                                icon: Icons.delete,
-                              ),
-                            ]),
-                        child: ListTile(
-                          leading: CircleAvatar(
-                            radius: 25.0,
-                            backgroundImage: NetworkImage(
-                                filtercontact.value[index].avatar.toString()),
-                            backgroundColor: Colors.transparent,
-                          ),
-                          contentPadding: const EdgeInsets.all(0),
-                          title: Text(
-                              '${filtercontact.value[index].firstName} ${filtercontact.value[index].lastName}'),
-                          subtitle:
-                              Text(filtercontact.value[index].email.toString()),
-                          trailing: IconButton(
-                            icon: const Icon(
-                              Icons.send_rounded,
-                              color: ApplicationTheme.primaryColor,
-                            ),
-                            onPressed: () {
-                              getUserDetails(filtercontact.value[index].id);
-                              // do something
-                            },
-                          ),
-                          onTap: () {},
-                        ),
-                      );
-                    }),
-              )
+                  width: MediaQuery.of(context).size.width,
+                  child: buildListView())
             ],
           ),
         ),

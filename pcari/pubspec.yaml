@@ -42,6 +42,8 @@ dependencies:
   open_mail_app: ^0.4.5
   fluttertoast: ^8.2.2
   searchfield: ^0.8.4
+  shared_preferences: ^2.2.1
+  like_button: ^2.0.5
 
 dev_dependencies:
   flutter_test:

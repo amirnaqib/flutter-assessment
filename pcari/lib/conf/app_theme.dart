@@ -10,6 +10,8 @@ abstract class ApplicationTheme {
   static const Color successColor = Colors.green;
   static const Color failedColor = Colors.red;
 
+  static const Color yellow = Color.fromARGB(255, 233, 210, 7);
+
   static const TextStyle title = TextStyle(
     fontSize: 24,
     color: Colors.white,
