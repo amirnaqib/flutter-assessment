@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:pcari/conf/app_theme.dart';
 import 'package:pcari/dto/userDetailsDto.dart';
 import 'package:http/http.dart' as http;
@@ -51,7 +52,35 @@ class _UserEditState extends State<UserEdit> {
     }
   }
 
-  saveDetails(id) {}
+  saveDetails(id) async {
+    var res = await http.put(
+      Uri.parse("https://reqres.in/api/users/$id"),
+      body: jsonEncode(<String, String>{
+        'firstname': firstname.text,
+        'lastname': lastname.text,
+        'email': email.text,
+      }),
+    );
+    if (res.statusCode == 200) {
+      Fluttertoast.showToast(
+          msg: "Successfuly Updated!",
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: ApplicationTheme.successColor,
+          textColor: Colors.white,
+          fontSize: 16.0);
+    } else {
+      Fluttertoast.showToast(
+          msg: "Failed To Update, Try Again!",
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: ApplicationTheme.failedColor,
+          textColor: Colors.white,
+          fontSize: 16.0);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
