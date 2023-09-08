@@ -46,7 +46,7 @@ class _mainContactScreenState extends State<mainContactScreen> {
     return Row(
       children: [
         ChipsChoice<int>.single(
-          choiceStyle: FlexiChipStyle(
+          choiceStyle: const FlexiChipStyle(
             backgroundColor: ApplicationTheme.primaryColor,
             foregroundColor: Colors.black,
           ),
@@ -66,16 +66,19 @@ class _mainContactScreenState extends State<mainContactScreen> {
       onSearchTextChanged: onSearch(),
       controller: searchController,
       searchInputDecoration: InputDecoration(
-        hintText: 'Search',
-        focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(
-            color: ApplicationTheme.primaryColor,
+          hintText: 'Search',
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(30),
+            borderSide: BorderSide(
+              color: ApplicationTheme.primaryColor,
+            ),
           ),
-        ),
-        border: OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.red),
-        ),
-      ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(30),
+            borderSide: BorderSide(
+              color: ApplicationTheme.primaryColor,
+            ),
+          )),
       suggestions: []);
 
   onSearch() {
