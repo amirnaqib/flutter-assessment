@@ -5,12 +5,13 @@ import 'package:flexi_chip/flexi_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:like_button/like_button.dart';
 import 'package:pcari/conf/app_theme.dart';
 import 'package:pcari/dto/userListDto.dart';
 import 'package:http/http.dart' as http;
+import 'package:pcari/provider/favorite_provider.dart';
 import 'package:pcari/screen/user_details.dart';
 import 'package:pcari/screen/user_edit.dart';
+import 'package:provider/provider.dart';
 import 'package:searchfield/searchfield.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -24,7 +25,6 @@ class mainContactScreen extends StatefulWidget {
 class _mainContactScreenState extends State<mainContactScreen> {
   int tag = 0;
   List<String> options = ['All', 'Favorite'];
-  List<String>? globalfavlist = [];
   ValueNotifier<List<userListDto>> userlist = ValueNotifier([]);
   ValueNotifier<List<userListDto>> filtercontact = ValueNotifier([]);
 
@@ -45,26 +45,6 @@ class _mainContactScreenState extends State<mainContactScreen> {
     }
   }
 
-  chipList() {
-    return Row(
-      children: [
-        ChipsChoice<int>.single(
-          choiceStyle: const FlexiChipStyle(
-            backgroundColor: ApplicationTheme.primaryColor,
-            foregroundColor: Colors.black,
-          ),
-          value: tag,
-          onChanged: (val) => setState(() => tag = val),
-          choiceItems: C2Choice.listFrom<int, String>(
-            source: options,
-            value: (i, v) => i,
-            label: (i, v) => v,
-          ),
-        ),
-      ],
-    );
-  }
-
   searchBar() => SearchField<userListDto>(
       onSearchTextChanged: onSearch(),
       controller: searchController,
@@ -72,13 +52,13 @@ class _mainContactScreenState extends State<mainContactScreen> {
           hintText: 'Search',
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(30),
-            borderSide: BorderSide(
+            borderSide: const BorderSide(
               color: ApplicationTheme.primaryColor,
             ),
           ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(30),
-            borderSide: BorderSide(
+            borderSide: const BorderSide(
               color: ApplicationTheme.primaryColor,
             ),
           )),
@@ -113,9 +93,7 @@ class _mainContactScreenState extends State<mainContactScreen> {
   }
 
   init() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final List<String>? favlist = prefs.getStringList('favlist');
-    globalfavlist = favlist;
+    print('refresh list');
 
     await getUserList();
     getUserList().then((response) {
@@ -168,11 +146,11 @@ class _mainContactScreenState extends State<mainContactScreen> {
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: ApplicationTheme.secondaryColor,
-          content: Text("Are you sure you want to delete this contact?"),
+          content: const Text("Are you sure you want to delete this contact?"),
           actionsAlignment: MainAxisAlignment.spaceBetween,
           actions: [
             TextButton(
-              child: Text(
+              child: const Text(
                 "Yes",
                 style: TextStyle(color: Colors.red),
               ),
@@ -181,7 +159,7 @@ class _mainContactScreenState extends State<mainContactScreen> {
               },
             ),
             TextButton(
-              child: Text(
+              child: const Text(
                 "No",
                 style: TextStyle(color: ApplicationTheme.primaryColor),
               ),
@@ -195,17 +173,7 @@ class _mainContactScreenState extends State<mainContactScreen> {
     );
   }
 
-  Future<bool> onFavButtonTapped(bool isLiked) async {
-    /// send your request here
-    // final bool success= await sendRequest();
-
-    /// if failed, you can do nothing
-    // return success? !isLiked:isLiked;
-
-    return !isLiked;
-  }
-
-  buildListView() => ListView.builder(
+  buildAllListView(FavoriteProvider provider) => ListView.builder(
       itemCount: filtercontact.value.length,
       shrinkWrap: true,
       itemBuilder: (context, index) {
@@ -250,39 +218,18 @@ class _mainContactScreenState extends State<mainContactScreen> {
               const SizedBox(
                 width: 10,
               ),
-              LikeButton(
-                onTap: onFavButtonTapped,
-                circleColor: CircleColor(
-                    start: ApplicationTheme.yellow,
-                    end: ApplicationTheme.yellow),
-                bubblesColor: BubblesColor(
-                  dotPrimaryColor: ApplicationTheme.yellow,
-                  dotSecondaryColor: ApplicationTheme.yellow,
-                ),
-                likeBuilder: (bool isLiked) {
-                  return Icon(
-                    Icons.star,
-                    color: isLiked ? ApplicationTheme.yellow : Colors.grey,
-                  );
-                },
-              ),
-              // IconButton(
-              //   onPressed: () {},
-              //   icon: Icon(
-              //     Icons.star,
-              //     color: ApplicationTheme.yellow,
-              //   ),
-              // ),
-              // Visibility(
-              //   visible: globalfavlist!
-              //           .contains(filtercontact.value[index].id.toString())
-              //       ? true
-              //       : false,
-              //   child: const Icon(
-              //     Icons.star,
-              //     color: ApplicationTheme.yellow,
-              //   ),
-              // ),
+              IconButton(
+                  onPressed: () {
+                    provider.toggleFavorite(
+                        filtercontact.value[index].id.toString());
+                  },
+                  icon:
+                      provider.isExist(filtercontact.value[index].id.toString())
+                          ? const Icon(
+                              Icons.star,
+                              color: ApplicationTheme.yellow,
+                            )
+                          : const Icon(Icons.star_border))
             ]),
             subtitle: Text(filtercontact.value[index].email.toString()),
             trailing: IconButton(
@@ -308,6 +255,7 @@ class _mainContactScreenState extends State<mainContactScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final provider = Provider.of<FavoriteProvider>(context);
     return Scaffold(
       floatingActionButton: FloatingActionButton(
         onPressed: () {},
@@ -319,7 +267,7 @@ class _mainContactScreenState extends State<mainContactScreen> {
         ),
       ),
       appBar: AppBar(
-        iconTheme: IconThemeData(
+        iconTheme: const IconThemeData(
           color: Colors.white, //change your color here
         ),
         actions: <Widget>[
@@ -346,10 +294,48 @@ class _mainContactScreenState extends State<mainContactScreen> {
           child: Column(
             children: [
               searchBar(),
-              chipList(),
+              Row(
+                children: [
+                  ChipsChoice<int>.single(
+                    choiceStyle: const FlexiChipStyle(
+                      backgroundColor: ApplicationTheme.primaryColor,
+                      foregroundColor: Colors.black,
+                    ),
+                    value: tag,
+                    onChanged: (val) => {
+                      if (val == 0)
+                        {
+                          //all
+                          setState(() => tag = val),
+                          print(
+                              'all list total : ${filtercontact.value.length}')
+                        }
+                      else
+                        {
+                          //fav
+                          setState(() => tag = val),
+
+                          print('show fav list id : ${provider.fav}'),
+                          setState(() {
+                            filtercontact.value = userlist.value
+                                .where((e) => e.id.toString() == '1')
+                                .toList();
+                          }),
+                          print(
+                              'fav list total : ${filtercontact.value.length}')
+                        }
+                    },
+                    choiceItems: C2Choice.listFrom<int, String>(
+                      source: options,
+                      value: (i, v) => i,
+                      label: (i, v) => v,
+                    ),
+                  ),
+                ],
+              ),
               SizedBox(
                   width: MediaQuery.of(context).size.width,
-                  child: buildListView())
+                  child: buildAllListView(provider))
             ],
           ),
         ),

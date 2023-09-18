@@ -43,7 +43,7 @@ dependencies:
   fluttertoast: ^8.2.2
   searchfield: ^0.8.4
   shared_preferences: ^2.2.1
-  like_button: ^2.0.5
+  provider: ^6.0.5
 
 dev_dependencies:
   flutter_test:
