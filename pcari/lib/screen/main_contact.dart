@@ -78,20 +78,6 @@ class _mainContactScreenState extends State<mainContactScreen> {
     });
   }
 
-  toggleFav(id) async {
-    //set to fav if dont have
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final List<String>? currentList = prefs.getStringList('favlist');
-    if (currentList!.contains(id)) {
-      //remove
-      currentList.remove(id);
-    } else {
-      //add
-      currentList.add(id);
-    }
-    await prefs.setStringList('favlist', currentList);
-  }
-
   init() async {
     print('refresh list');
 
@@ -202,9 +188,6 @@ class _mainContactScreenState extends State<mainContactScreen> {
                 ),
               ]),
           child: ListTile(
-            onLongPress: () {
-              toggleFav(filtercontact.value[index].id.toString());
-            },
             leading: CircleAvatar(
               radius: 25.0,
               backgroundImage:
@@ -239,6 +222,79 @@ class _mainContactScreenState extends State<mainContactScreen> {
               ),
               onPressed: () {
                 getUserDetails(filtercontact.value[index].id);
+                // do something
+              },
+            ),
+            onTap: () {},
+          ),
+        );
+      });
+
+  buildFavListView(FavoriteProvider provider) => ListView.builder(
+      itemCount: provider.fav.length,
+      shrinkWrap: true,
+      itemBuilder: (context, index) {
+        var favIndex = int.parse(provider.fav[index]);
+        return Slidable(
+          endActionPane: ActionPane(
+              motion: const ScrollMotion(),
+              dismissible: DismissiblePane(onDismissed: () {}),
+              children: [
+                SlidableAction(
+                  onPressed: (context) async {
+                    editUserDetails(filtercontact.value[favIndex - 1].id);
+                  },
+                  backgroundColor:
+                      ApplicationTheme.primaryColor.withOpacity(0.5),
+                  foregroundColor: Colors.yellow,
+                  icon: Icons.edit,
+                ),
+                SlidableAction(
+                  onPressed: (context) async {
+                    showConfirmDeleteDialog(
+                        filtercontact.value[favIndex - 1].id);
+                  },
+                  backgroundColor:
+                      ApplicationTheme.primaryColor.withOpacity(0.5),
+                  foregroundColor: Colors.red,
+                  icon: Icons.delete,
+                ),
+              ]),
+          child: ListTile(
+            leading: CircleAvatar(
+              radius: 25.0,
+              backgroundImage: NetworkImage(
+                  filtercontact.value[favIndex - 1].avatar.toString()),
+              backgroundColor: Colors.transparent,
+            ),
+            contentPadding: const EdgeInsets.all(0),
+            title: Row(children: [
+              Text(
+                  '${filtercontact.value[favIndex - 1].firstName} ${filtercontact.value[favIndex - 1].lastName}'),
+              const SizedBox(
+                width: 10,
+              ),
+              IconButton(
+                  onPressed: () {
+                    provider.toggleFavorite(
+                        filtercontact.value[favIndex - 1].id.toString());
+                  },
+                  icon: provider.isExist(
+                          filtercontact.value[favIndex - 1].id.toString())
+                      ? const Icon(
+                          Icons.star,
+                          color: ApplicationTheme.yellow,
+                        )
+                      : const Icon(Icons.star_border))
+            ]),
+            subtitle: Text(filtercontact.value[favIndex - 1].email.toString()),
+            trailing: IconButton(
+              icon: const Icon(
+                Icons.send_rounded,
+                color: ApplicationTheme.primaryColor,
+              ),
+              onPressed: () {
+                getUserDetails(filtercontact.value[favIndex - 1].id);
                 // do something
               },
             ),
@@ -318,7 +374,7 @@ class _mainContactScreenState extends State<mainContactScreen> {
                           print('show fav list id : ${provider.fav}'),
                           setState(() {
                             filtercontact.value = userlist.value
-                                .where((e) => e.id.toString() == '1')
+                                .where((e) => e.id.toString().contains('1'))
                                 .toList();
                           }),
                           print(
@@ -335,7 +391,9 @@ class _mainContactScreenState extends State<mainContactScreen> {
               ),
               SizedBox(
                   width: MediaQuery.of(context).size.width,
-                  child: buildAllListView(provider))
+                  child: tag == 0
+                      ? buildAllListView(provider)
+                      : buildFavListView(provider))
             ],
           ),
         ),
