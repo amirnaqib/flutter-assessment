@@ -46,10 +46,10 @@ class _mainContactScreenState extends State<mainContactScreen> {
   }
 
   searchBar() => SearchField<userListDto>(
-      onSearchTextChanged: onSearch(),
+      onSearchTextChanged: tag == 0 ? onSearch() : onSearchFav(),
       controller: searchController,
       searchInputDecoration: InputDecoration(
-          hintText: 'Search',
+          hintText: 'search name..',
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(30),
             borderSide: const BorderSide(
@@ -65,6 +65,20 @@ class _mainContactScreenState extends State<mainContactScreen> {
       suggestions: []);
 
   onSearch() {
+    setState(() {
+      filtercontact.value = userlist.value
+          .where((e) =>
+              e.firstName!
+                  .toLowerCase()
+                  .contains(searchController.text.toLowerCase()) ||
+              e.lastName!
+                  .toLowerCase()
+                  .contains(searchController.text.toLowerCase()))
+          .toList();
+    });
+  }
+
+  onSearchFav() {
     setState(() {
       filtercontact.value = userlist.value
           .where((e) =>
@@ -309,6 +323,23 @@ class _mainContactScreenState extends State<mainContactScreen> {
     init();
   }
 
+  checkFavList(FavoriteProvider provider) {
+    if (provider.fav.isEmpty) {
+      return Column(children: [
+        const SizedBox(
+          height: 50,
+        ),
+        Image.asset(
+          'assets/images/emptybox.png',
+          height: 200,
+          width: 200,
+        ),
+      ]);
+    } else {
+      return buildFavListView(provider);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<FavoriteProvider>(context);
@@ -393,7 +424,7 @@ class _mainContactScreenState extends State<mainContactScreen> {
                   width: MediaQuery.of(context).size.width,
                   child: tag == 0
                       ? buildAllListView(provider)
-                      : buildFavListView(provider))
+                      : checkFavList(provider))
             ],
           ),
         ),
